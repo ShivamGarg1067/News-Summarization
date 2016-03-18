@@ -1,0 +1,157 @@
+import java.util.*;
+import java.util.regex.Pattern;
+import java.io.*;
+
+public class StopWordRemoval { 
+	
+	
+
+    public static Boolean isStopWord(String word, String[] stopWords)
+    {
+        boolean found = false; 
+        for(int i=0;i<659;i++)
+        {
+        	if(word.equalsIgnoreCase(stopWords[i]))
+        	{
+        		found=true;
+        		break;
+        	}
+        }
+        return found;
+    }
+
+    
+    
+    
+    
+    public static int compareWords(String word1, String word2)
+    {
+        return word1.compareToIgnoreCase(word2);
+    }
+
+    
+    
+    
+    public static String[] readStopWords(String stopWordsFilename) 
+    {
+        String[] stopWords = null;
+        try
+        {
+        	System.out.println(stopWordsFilename);
+            Scanner stopWordsFile = new Scanner(new File(stopWordsFilename));
+            int numStopWords =659;
+            
+          
+            stopWords = new String[numStopWords];
+
+            for (int i = 0; i < numStopWords; i++)
+            {
+                stopWords[i] = stopWordsFile.next();
+             //   System.out.println(stopWords[i]);
+            }    
+
+            stopWordsFile.close();
+        }
+        catch (FileNotFoundException e)
+        {
+            System.err.println(e.getMessage());
+            System.exit(-1);
+        }
+
+        return stopWords;
+     }
+    
+    
+    
+    
+    
+
+    public static void removeStopWords(String[] stopWords)
+    {
+        String word=null,path=null;
+     //   int i=0;
+     //   System.out.println(textFilename);
+        try
+        {
+        	File folder = new File("F:\\business");
+        	File[] listOfFiles = folder.listFiles();
+     //   	i=1;
+        	for (File file : listOfFiles) {
+        	    if (file.isFile()) {
+        	        String RESULT_FNAME = "F:\\file\\"+file.getName();
+        	    	path=file.getAbsolutePath();
+        	        System.out.println(file.getName());
+        	    //    Scanner s = new Scanner(new File(path));
+            Scanner textFile = new Scanner(new File(path));
+            textFile.useDelimiter(Pattern.compile("[ \n\r\t,.;:?!'\"]+"));
+
+            PrintWriter outFile = new PrintWriter(new File(RESULT_FNAME));
+            
+            while (textFile.hasNext())
+            {
+            	word = textFile.next();
+
+           	    
+           	    
+                if (!isStopWord(word, stopWords))
+                {
+                 //   System.out.print(word + " ");
+                	 WriteToFile(RESULT_FNAME,word);
+                }   
+                
+                   
+            }
+            
+            System.out.println("Output File " + RESULT_FNAME);
+        	    }
+        	}
+
+           
+        }
+        catch (FileNotFoundException e)
+        {
+            System.err.println(e.getMessage());
+            System.exit(-1);
+        }
+       
+    }
+
+    
+    
+    
+    	public static void WriteToFile(String RESULT_FNAME, String word)
+    	{
+    		try {
+
+    			
+    			File file = new File(RESULT_FNAME);
+
+    			FileWriter fw = new FileWriter(file,true);
+    			BufferedWriter bw = new BufferedWriter(fw);
+    			bw.write(word+" ");
+    			bw.close();
+
+
+
+
+    		} catch (IOException e) {
+    			e.printStackTrace();
+    		}
+    	}
+    
+ 
+    
+    public static void main(String[] arg)
+    {
+        Scanner keyboard = new Scanner(System.in);
+        System.out.print("Input StopWord File: ");
+        String[] stopWords = readStopWords(keyboard.next());
+        File file = new File("result.txt");
+    	
+		if(file.delete())
+			System.out.println(file.getName() + " is deleted!");
+        System.out.print("Input file from which stopword to be removed: ");
+        removeStopWords(stopWords);
+
+    }
+}
