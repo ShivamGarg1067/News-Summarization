@@ -1,0 +1,442 @@
+import java.io.*;
+import java.text.BreakIterator;
+import java.util.*;
+import java.math.*;
+
+public class arrayl 
+{
+	public static ArrayList<String> WORDS=new ArrayList<String>(); 
+	public static ArrayList<ArrayList<Integer>> NUM=new ArrayList<ArrayList<Integer>>();
+	public static ArrayList<Integer> size=new ArrayList<Integer>();
+	public static ArrayList<ArrayList<Float>> tfidf=new ArrayList<ArrayList<Float>>();
+	public static ArrayList<ArrayList<Float>> sentence_weight= new ArrayList<ArrayList<Float>>();
+	public static ArrayList<ArrayList<String>> Sent=new ArrayList<ArrayList<String>>();
+	public static ArrayList<ArrayList<Integer>> Aux=new ArrayList<ArrayList<Integer>>();
+	public static ArrayList<ArrayList<String>> Summary=new ArrayList<ArrayList<String>>(); 
+	public static ArrayList<ArrayList<String>> Sentences= new ArrayList<ArrayList<String>>();
+	public static ArrayList<Integer> size1=new ArrayList<Integer>();
+	public static int k=0;
+	
+	
+	
+	
+	public static void main(String args[]) throws IOException
+	{
+		int pos=0,POS=0;
+		int ele=0,j=0,ELE=0;
+		String path;
+		String tmp=null;
+		int tsize=0;
+		j=new File("F:\\test").listFiles().length;
+		//System.out.println(j);
+		
+		File folder = new File("F:\\test");
+		File[] listOfFiles = folder.listFiles();
+	
+		for (File file : listOfFiles) 
+		{
+			if (file.isFile()) 
+			{
+				path=file.getAbsolutePath();
+	
+				Scanner s = new Scanner(new File(path));
+				ArrayList<String> list = new ArrayList<String>();
+				ArrayList<Integer> num= new ArrayList<Integer>();
+				while (s.hasNext())
+				{
+					tmp=s.next();
+					if(!list.contains(tmp))
+					{
+						if(!WORDS.contains(tmp))
+						{
+							WORDS.add(tmp);
+						}
+						list.add(tmp);
+						num.add(1);
+					}
+					else
+					{
+						pos=list.indexOf(tmp);
+						POS=WORDS.indexOf(tmp);
+						ele=num.get(pos);
+						ele++;
+						ELE++;
+						num.set(pos, ele);	
+					}
+			
+			
+					tmp=null;
+					ele=0;
+				}
+				tsize=WORDS.size();
+				size.add(tsize);
+				twodim(list,num);
+				s.close();
+			}
+		}
+		WriteToFile(WORDS,1,NUM);
+		Optimize();
+		System.out.println("Done");
+		System.out.println("Optimizing");
+		System.out.println("Working on tf-idf");
+		tf_idf();
+		main1();
+	}
+	
+	public static void twodim(ArrayList<String> list, ArrayList<Integer> num)
+	{
+		int global_size=0;
+		global_size=WORDS.size();
+		ArrayList<Integer> n=new ArrayList<>();
+		NUM.add(n);
+		for(int j=0;j<global_size;j++)
+		{
+			n.add(0);
+		}
+		int len=0,pos=0;
+		int tmp=0;
+		String ele=null;
+		len=list.size();
+		for(int i=0;i<len;i++)
+		{
+			ele=list.get(i);
+			pos=WORDS.indexOf(ele);
+			tmp=num.get(i);
+			n.set(pos,tmp);
+		}
+	}
+	
+	
+	public static void Optimize()
+	{
+		int t=size.size();
+		int t1=WORDS.size();
+		int temp=0;
+		for(int i=0;i<t;i++)
+		{
+			temp=size.get(i);
+			for(int j=temp;j<t1;j++)
+			{
+				NUM.get(i).add(0);
+			}
+		}
+	}
+	
+	
+	public static void WriteToFile(ArrayList<String> list,int doc_no,ArrayList<ArrayList<Integer>> num)
+	{
+		try 
+		{
+			if(doc_no==1)
+			{
+				PrintWriter pw=new PrintWriter("term_frequency.txt");
+				pw.close();
+			}
+		
+			PrintWriter pw = new PrintWriter(new FileOutputStream(new File("term_frequency.txt"),true));
+		    pw.print("doc"+doc_no+"  ");
+		    pw.print(list+"\n");
+		    pw.print(num+"\n");
+		    pw.close();
+
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	
+	public static void tf_idf()
+	{
+		ArrayList<ArrayList<Integer>> raw_freq= new ArrayList<ArrayList<Integer>>();
+		ArrayList<Integer> maxt_in_d=new ArrayList<Integer>();
+		ArrayList<ArrayList<Float>> term_frequency=new ArrayList<ArrayList<Float>>();
+		int no_doc=0;
+		
+		ArrayList<Integer> term_doc=new ArrayList<Integer>();
+		ArrayList<Float> idf=new ArrayList<Float>();
+		int count=0;
+		int size=0;
+		int large=0;
+		size=WORDS.size();
+		no_doc=NUM.size();
+		for(int i=0;i<size;i++)
+		{		
+			count=0;	
+			int temp=0;
+			ArrayList<Integer> t=new ArrayList<Integer>();
+			raw_freq.add(t);
+			for(int j=0;j<no_doc;j++)
+			{
+				temp=NUM.get(j).get(i);
+				t.add(temp);
+				if(temp!=0)
+					count++;
+			}
+			term_doc.add(count);
+		}
+		int tem=0;
+		for(int y=0;y<no_doc;y++)
+		{
+			for(int i=0;i<size;i++)
+			{	
+					tem=raw_freq.get(i).get(y);
+					if(tem>large)
+						large=tem;			
+			}
+			maxt_in_d.add(large);
+			large=0;
+			tem=0;
+		}
+		
+		for(int i=0;i<size;i++)
+		{
+			float temp2=0;
+			int m=0,temp=0;
+			ArrayList<Float> u=new ArrayList<Float>();
+			term_frequency.add(u);
+			for(int j=0;j<no_doc;j++)
+			{
+				temp=raw_freq.get(i).get(j);
+				m=maxt_in_d.get(j);
+				temp2=(float) (0.5+((0.5*temp)/m));
+				u.add(temp2);
+			}
+			
+		}
+		
+		for(int p=0;p<size;p++)
+		{	
+			int temp=0;
+			float z=0;
+			float re=0;
+			temp=term_doc.get(p);
+			z=(no_doc/temp)+1;
+			re=(float) Math.log10(z);
+			idf.add(re);
+		}
+		
+		for(int i=0;i<size;i++)
+		{
+			float xx=0,yy=0,zz=0;
+			ArrayList<Float> z=new ArrayList<Float>();
+			tfidf.add(z);
+			for(int j=0;j<no_doc;j++)
+			{
+				xx=term_frequency.get(i).get(j);
+				yy=idf.get(i);
+				zz=xx*yy;
+				z.add(zz);
+			}
+		}
+	//	System.out.println("max then term then idf");
+	//	System.out.println("tf="+term_frequency);
+	//	System.out.println("idf="+idf);
+	//	System.out.println("tfidf="+tfidf);
+	}
+
+	public static void main1()throws IOException 
+    {
+	//	int j;
+		int count=0;
+		String path=null;
+	//	j=new File("F:\\test1").listFiles().length;
+		File folder = new File("F:\\test1");
+		File[] listOfFiles = folder.listFiles();
+	
+		for (File file : listOfFiles) 
+		{
+			if (file.isFile()) 
+			{
+				count++;
+				Sent.clear();
+				path=file.getAbsolutePath();
+				File read = new File(path);
+				String paragraph=null;
+				BufferedReader br = new BufferedReader(new FileReader(read));
+				StringBuffer fileContents = new StringBuffer();
+				String line = br.readLine();
+				paragraph=line;
+				while (line != null) 
+				{
+					fileContents.append(line);
+					line = br.readLine();
+					if(line!=null)
+						paragraph=paragraph.concat(line);
+				}
+				Convert_Sentence(paragraph,count);
+				br.close();
+
+    	 
+			}
+		}
+		 
+		summary();
+		System.out.println("DONE!!!!");
+    }
+	
+	
+	
+	
+	public static void ConvertToWords(String data,ArrayList<String> str) 
+	{
+	    BreakIterator bi = BreakIterator.getWordInstance(Locale.US);
+        bi.setText(data);
+        int lastIndex = bi.first();
+        while (lastIndex != BreakIterator.DONE) 
+        {
+	        int firstIndex = lastIndex;
+	        lastIndex = bi.next();
+	        if (lastIndex != BreakIterator.DONE && Character.isLetterOrDigit(data.charAt(firstIndex))) 
+	        {
+	               String word = data.substring(firstIndex, lastIndex);
+	               str.add(word);     	                
+	        }
+	    }
+
+        //System.out.println("");     
+	}
+	
+	
+	public static void Convert_Sentence(String paragraph, int count)
+	{
+		BreakIterator iterator =BreakIterator.getSentenceInstance(Locale.US);
+		int sentences = count(iterator, paragraph,count);
+		System.out.println("Number of sentences: " + sentences);
+	}
+
+	
+	
+	private static int count(BreakIterator bi, String source,int doc_no) 
+	{
+		int counter = 0;	
+		bi.setText(source);
+	//	int temp11=0; 
+		int lastIndex = bi.first();
+		while (lastIndex != BreakIterator.DONE) 
+		{
+			int firstIndex = lastIndex;
+		    lastIndex = bi.next();
+		 
+		    if (lastIndex != BreakIterator.DONE) 
+		    {
+		    	String sentence = source.substring(firstIndex, lastIndex);
+		    	ArrayList<String> temp=new ArrayList<String>();
+		    	Sent.add(temp);
+		    	ArrayList<String> temp1=new ArrayList<String>();
+		    	Sentences.add(temp1);
+		    	temp1.add(sentence);
+		   // 	temp11=sentence.length();
+		        ConvertToWords(sentence,temp);
+		    //	int s=temp.size();
+		        counter++;
+		    }		   
+        }		
+		size1.add(k);
+		k=k+counter;
+		WriteToFile1(Sent,doc_no);
+		frequency(doc_no,counter);
+		return counter;
+	}
+	
+	public static void WriteToFile1(ArrayList<ArrayList<String>> sentence,int doc_no)
+	{
+		try 
+		{
+			if(doc_no==1)
+			{
+				PrintWriter pw=new PrintWriter("term_frequency1.txt");
+				pw.close();
+			}
+			PrintWriter pw = new PrintWriter(new FileOutputStream(new File("term_frequency1.txt"),true));
+		    pw.print("document:"+doc_no);
+		    pw.println(sentence);
+		    pw.close();
+		}
+		catch (IOException e) 
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	
+	public static void frequency(int doc_no, int no_sentence)
+	{
+		String temp=null;
+		int len=0;
+		int pos=0;
+		float rank=0;
+		ArrayList<Float> n=new ArrayList<Float>();
+		ArrayList<Integer> p=new ArrayList<Integer>();
+		sentence_weight.add(n);
+		Aux.add(p);
+		System.out.println("Sent="+Sent);
+		for(int i=0;i<no_sentence;i++)
+		{
+			len=Sent.get(i).size();
+			float large=0;
+			for(int j=0;j<len;j++)
+			{
+				temp=Sent.get(i).get(j);
+
+				if(WORDS.contains(temp))
+				{
+					pos=WORDS.indexOf(temp);
+
+				}
+				rank=tfidf.get(pos).get(doc_no-1);
+				if(rank>large)
+					large=rank;
+				
+			}
+			n.add(large);
+			p.add(0);
+			rank=0;
+		}
+		System.out.println("rankings are:"+sentence_weight);
+	}
+	
+	
+	public static void summary()
+	{
+		int s1=sentence_weight.size();
+		float large=0;
+		int d=0,s=0;
+		for(int l=0;l<10;l++)
+		{
+			large=0;d=0;s=0;
+			for(int i=0;i<s1;i++)
+			{
+				int s2=sentence_weight.get(i).size();		
+				for(int j=0;j<s2;j++)
+				{
+						if(sentence_weight.get(i).get(j)>=large && Aux.get(i).get(j)!=1 )
+						{
+							large=sentence_weight.get(i).get(j);
+							d=i;s=j;
+						}
+				}
+			}
+			int gg=0;
+			System.out.println("d="+d+"s="+s);
+			System.out.println("large="+large);
+			ArrayList<String> t=new ArrayList<String>();
+			Summary.add(t);
+			gg=size1.get(d)+s;
+			System.out.println("Sent====="+size1);
+		    t.addAll(Sentences.get(gg));
+			Aux.get(d).set(s, 1);
+			
+		}
+		WriteToFile1(Sentences,0);
+		nicePrint();
+	}
+	
+	public static void nicePrint()
+	{
+		//int s1=Summary.size();
+		WriteToFile1(Summary,0);
+	
+				System.out.print(Summary);	
+	}
+}
